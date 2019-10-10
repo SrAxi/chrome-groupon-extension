@@ -2,30 +2,29 @@
 
 'use strict'
 
+const baseUrl = 'http://browserplugin.geekon.us-west-2.aws.groupondev.com'
+const oneHourMs = 3600000
+let websitesOffers = []
+
 chrome.runtime.onInstalled.addListener(function () {
     chrome.storage.sync.set({ offer: false })
 })
-
-let websitesOffers = []
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && websitesOffers.some(url => tab.url.includes(url))) {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             chrome.browserAction.setIcon({ path: 'images/groupon_icon_48.png' })
 
-            // TODO: Change this mocked object with an actual Ajax call
-            const offer = {
-                image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/AVIS_logo_2012.svg/1280px-AVIS_logo_2012.svg.png',
-                offers: [
-                    {
-                        link: 'https://www.groupon.com/coupons/events/car-rental-deals?c=7a103b69-8d6e-48f4-bb95-58feace66d76',
-                        text: 'Save $10 to $25 on your next rental!'
-                    }
-                ]
-            }
-            chrome.storage.sync.set({ offer }, () => {
-                changeBadge(String(offer.offers.length))
-            })
+            const website = websitesOffers.find(url => tab.url.includes(url))
+
+            request('GET', `/offers/${website}`)
+                .then(({ target: { response } }) => {
+                    const offer = JSON.parse(response).offer
+                    chrome.storage.sync.set({ offer }, () => {
+                        changeBadge(String(offer.offers.length))
+                    })
+                })
+                .catch(console.error)
         })
     } else {
         chrome.browserAction.setIcon({ path: 'images/groupon_icon_grey_48.png' })
@@ -34,26 +33,41 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 })
 
+// Fetching websites array
+updateWebsitesOffers()
+
+// Polling for updating websites array
+poll(oneHourMs)
+
 function changeBadge(text) {
     chrome.browserAction.setBadgeText({ text })
     chrome.browserAction.setBadgeBackgroundColor({ color: '#4688F1' })
 }
 
-async function stall(stallTime = 2000) {
-    await new Promise(resolve => setTimeout(resolve, stallTime))
+function updateWebsitesOffers() {
+    request('GET', '/sites')
+        .then(({ target: { response } }) => {
+            websitesOffers = JSON.parse(response).sites
+        })
+        .catch(console.error)
+
+    console.log('Hi, I\'m polling', websitesOffers)
 }
 
 function poll(pollTime = 5000) {
     setInterval(async () => {
-        // TODO: This is mocking the API call that retrieves the website array
-        console.log('polling, waiting 2 seconds')
-        await stall()
-        websitesOffers = Math.random() * 100 > 50 ? ["avis.com"] : ["budget.ie", "enterprise.ie"]
-
-        console.log('Hi, I\'m polling', websitesOffers)
+        updateWebsitesOffers()
     }, pollTime)
 }
 
-poll()
+function request(method, url) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open(method, `${baseUrl}${url}`)
+        xhr.onload = resolve
+        xhr.onerror = reject
+        xhr.send()
+    })
+}
 
 
