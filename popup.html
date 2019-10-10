@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
+    <style>
+        div.container {
+            width: 300px;
+            height: auto;
+            padding: 12px 0;
+        }
+        p {
+            font-size: 1.12em;
+            text-align: center;
+            color: #4C4C4C;
+        }
+        div.image-container {
+            display: none;
+        }
+        img {
+            width: 200px !important;
+        }
+    </style>
+</head>
+<body>
+<div class="ui container centered">
+    <div class="ui segment image-container">
+        <img class="ui centered medium image" id="headerImg" />
+    </div>
+    <p id="offerTitle"></p>
+    <div class="ui segment center aligned offer-container">
+        <p id="offerText"></p>
+        <a id="offerBtn" class="ui green button" target="_blank">Go to offer!</a>
+    </div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>
