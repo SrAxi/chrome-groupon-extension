@@ -10,27 +10,12 @@ chrome.runtime.onInstalled.addListener(function () {
     chrome.storage.sync.set({ offer: false })
 })
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && websitesOffers.some(url => tab.url.includes(url))) {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            chrome.browserAction.setIcon({ path: 'images/groupon_icon_48.png' })
+chrome.tabs.onUpdated.addListener(handleTabChange)
 
-            const website = websitesOffers.find(url => tab.url.includes(url))
-
-            request('GET', `/offers/${website}`)
-                .then(({ target: { response } }) => {
-                    const offer = JSON.parse(response).offer
-                    chrome.storage.sync.set({ offer }, () => {
-                        changeBadge(String(offer.offers.length))
-                    })
-                })
-                .catch(console.error)
-        })
-    } else {
-        chrome.browserAction.setIcon({ path: 'images/groupon_icon_grey_48.png' })
-        changeBadge('')
-        chrome.storage.sync.set({ offer: false })
-    }
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+    chrome.tabs.get(tabId, ({ status, url }) => {
+        handleTabChange(tabId, { status }, { url })
+    })
 })
 
 // Fetching websites array
@@ -48,10 +33,9 @@ function updateWebsitesOffers() {
     request('GET', '/sites')
         .then(({ target: { response } }) => {
             websitesOffers = JSON.parse(response).sites
+            console.log({ websitesOffers })
         })
         .catch(console.error)
-
-    console.log('Hi, I\'m polling', websitesOffers)
 }
 
 function poll(pollTime = 5000) {
@@ -68,6 +52,30 @@ function request(method, url) {
         xhr.onerror = reject
         xhr.send()
     })
+}
+
+function handleTabChange(tabId, { status }, { url }) {
+    if (status === 'complete' && websitesOffers.some(website => url.includes(website))) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            chrome.browserAction.setIcon({ path: 'images/groupon_icon_48.png' })
+
+            const website = websitesOffers.find(url => url.includes(url))
+
+            request('GET', `/offers/${website}`)
+                .then(({ target: { response } }) => {
+                    const offer = JSON.parse(response).offer
+                    console.log({ offer })
+                    chrome.storage.sync.set({ offer }, () => {
+                        changeBadge(String(offer.offers.length))
+                    })
+                })
+                .catch(console.error)
+        })
+    } else {
+        chrome.browserAction.setIcon({ path: 'images/groupon_icon_grey_48.png' })
+        changeBadge('')
+        chrome.storage.sync.set({ offer: false })
+    }
 }
 
 
