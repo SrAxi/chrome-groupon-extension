@@ -56,8 +56,8 @@ function request(method, url) {
 
 function handleTabChange(tabId, { status }, { url }) {
     if (status === 'complete' && websitesOffers.some(website => url.includes(website))) {
+        chrome.browserAction.setIcon({ path: 'images/groupon_icon_48.png' })
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            chrome.browserAction.setIcon({ path: 'images/groupon_icon_48.png' })
 
             const website = websitesOffers.find(website => url.includes(website))
 
