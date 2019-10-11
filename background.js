@@ -59,7 +59,7 @@ function handleTabChange(tabId, { status }, { url }) {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             chrome.browserAction.setIcon({ path: 'images/groupon_icon_48.png' })
 
-            const website = websitesOffers.find(url => url.includes(url))
+            const website = websitesOffers.find(website => url.includes(website))
 
             request('GET', `/offers/${website}`)
                 .then(({ target: { response } }) => {
