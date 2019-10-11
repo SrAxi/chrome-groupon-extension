@@ -61,7 +61,7 @@ function createOffers(offers = []) {
 
 function removeOffers() {
     const containers = document.getElementsByClassName('offer-container')
-    if (containers) {
+    if (containers && containers.length > 0) {
         containers.forEach(c => c.parentNode.removeChild(c))
     }
 }
